@@ -72,15 +72,10 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
             controller: _nameController,
             maxLength: 50,
             decoration: InputDecoration(label: Text("Name")),
-            validator: (String? value) {
-              if (value == null || value.isEmpty) {
-                return "You can't leave it empty";
-              }
-              return null;
-            },
           ),
           SizedBox(height: 20),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: TextFormField(
@@ -91,6 +86,7 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
               SizedBox(width: 20),
               Expanded(
                 child: DropdownButtonFormField<Categories>(
+                  initialValue: selectedCategory,
                   items: [
                     for (final category in categories.entries)
                       DropdownMenuItem(
@@ -119,27 +115,54 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
               ),
             ],
           ),
-          SizedBox(height: 20),
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.onSecondary,
-              padding: EdgeInsets.fromLTRB(40, 10, 40, 10),
-            ),
-            onPressed: () {
-              final groceries = ref.watch(groceryItemsProvider);
-              var newId = groceries.length + 1;
-              var newGroceryItem = GroceryItem(
-                id: newId.toString(),
-                name: _nameController.text,
-                quantity: int.parse(_quantityController.text),
-                category: categories[selectedCategory]!,
-              );
-              ref
-                  .read(groceryItemsProvider.notifier)
-                  .updateGroceryItem(newGroceryItem, ref);
-              Navigator.of(context).pop();
-            },
-            child: Text("Save"),
+          SizedBox(height: 50),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _nameController.text = "";
+                    _quantityController.text = "";
+                    selectedCategory = null;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.onSecondary,
+                ),
+                child: Text("Reset"),
+              ),
+              ElevatedButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.onSecondary,
+                ),
+                onPressed: () {
+                  if (_nameController.text == "" ||
+                      _quantityController.text == "" ||
+                      selectedCategory == null) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Finish filling out the form!")),
+                    );
+                    return;
+                  }
+                  final groceries = ref.watch(groceryItemsProvider);
+                  var newId = groceries.length + 1;
+
+                  var newGroceryItem = GroceryItem(
+                    id: newId.toString(),
+                    name: _nameController.text,
+                    quantity: int.parse(_quantityController.text),
+                    category: categories[selectedCategory]!,
+                  );
+                  ref
+                      .read(groceryItemsProvider.notifier)
+                      .updateGroceryItem(newGroceryItem, ref);
+                  Navigator.of(context).pop();
+                },
+                child: Text("Save"),
+              ),
+            ],
           ),
         ],
       ),
