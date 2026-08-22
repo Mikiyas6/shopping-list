@@ -21,6 +21,7 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider);
+
     return Form(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -71,22 +72,63 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
           TextFormField(
             controller: _nameController,
             maxLength: 50,
-            decoration: InputDecoration(label: Text("Name")),
+            decoration: const InputDecoration(label: Text("Name")),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Please enter a name.";
+              }
+
+              if (value.trim().length < 2) {
+                return "Name must be at least 2 characters.";
+              }
+
+              if (value.trim().length > 50) {
+                return "Name cannot exceed 50 characters.";
+              }
+              if (int.tryParse(value.trim()) != null) {
+                return "Name cannot be a number";
+              }
+
+              return null;
+            },
           ),
-          SizedBox(height: 20),
+
+          const SizedBox(height: 20),
+
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: TextFormField(
                   controller: _quantityController,
-                  decoration: InputDecoration(label: Text("Quantity")),
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(label: Text("Quantity")),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Please enter a quantity.";
+                    }
+
+                    final quantity = int.tryParse(value.trim());
+
+                    if (quantity == null) {
+                      return "Please enter a valid number.";
+                    }
+
+                    if (quantity <= 0) {
+                      return "Quantity must be greater than 0.";
+                    }
+
+                    return null;
+                  },
                 ),
               ),
-              SizedBox(width: 20),
+
+              const SizedBox(width: 20),
+
               Expanded(
                 child: DropdownButtonFormField<Categories>(
                   initialValue: selectedCategory,
+                  decoration: const InputDecoration(label: Text("Category")),
                   items: [
                     for (final category in categories.entries)
                       DropdownMenuItem(
@@ -100,7 +142,7 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
                                 color: category.value.color,
                               ),
                             ),
-                            SizedBox(width: 7),
+                            const SizedBox(width: 7),
                             Text(category.value.title),
                           ],
                         ),
@@ -110,6 +152,13 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
                     setState(() {
                       selectedCategory = value;
                     });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return "Please select a category.";
+                    }
+
+                    return null;
                   },
                 ),
               ),
@@ -160,7 +209,7 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
                       .updateGroceryItem(newGroceryItem, ref);
                   Navigator.of(context).pop();
                 },
-                child: Text("Save"),
+                child: Text("Add Item"),
               ),
             ],
           ),
