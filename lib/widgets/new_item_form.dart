@@ -16,13 +16,16 @@ class NewItemForm extends ConsumerStatefulWidget {
 class _NewItemFormState extends ConsumerState<NewItemForm> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
-  Categories? selectedCategory;
+  Categories selectedCategory = Categories.vegetables;
+  var enteredName = '';
+  var enteredQuantity = '';
 
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider);
-
+    final formKey = GlobalKey<FormState>();
     return Form(
+      key: formKey,
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
@@ -91,6 +94,9 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
 
               return null;
             },
+            onSaved: (newValue) {
+              enteredName = newValue!;
+            },
           ),
 
           const SizedBox(height: 20),
@@ -119,6 +125,9 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
                     }
 
                     return null;
+                  },
+                  onSaved: (newValue) {
+                    enteredQuantity = newValue!;
                   },
                 ),
               ),
@@ -150,15 +159,8 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
                   ],
                   onChanged: (value) {
                     setState(() {
-                      selectedCategory = value;
+                      selectedCategory = value!;
                     });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return "Please select a category.";
-                    }
-
-                    return null;
                   },
                 ),
               ),
@@ -170,11 +172,7 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    _nameController.text = "";
-                    _quantityController.text = "";
-                    selectedCategory = null;
-                  });
+                  formKey.currentState!.reset();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.onSecondary,
@@ -186,28 +184,29 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
                   backgroundColor: Theme.of(context).colorScheme.onSecondary,
                 ),
                 onPressed: () {
-                  if (_nameController.text == "" ||
-                      _quantityController.text == "" ||
-                      selectedCategory == null) {
+                  if (formKey.currentState!.validate()) {
+                    formKey.currentState!.save();
+                    final groceries = ref.watch(groceryItemsProvider);
+                    var newId = groceries.length + 1;
+                    var newGroceryItem = GroceryItem(
+                      id: newId.toString(),
+                      name: enteredName,
+                      quantity: int.tryParse(enteredQuantity)!,
+                      category: categories[selectedCategory]!,
+                    );
+                    ref
+                        .read(groceryItemsProvider.notifier)
+                        .updateGroceryItem(newGroceryItem, ref);
+                    Navigator.of(context).pop();
+                    return;
+                  }
+                  if (enteredName == "" || enteredQuantity == "") {
                     ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("Finish filling out the form!")),
                     );
                     return;
                   }
-                  final groceries = ref.watch(groceryItemsProvider);
-                  var newId = groceries.length + 1;
-
-                  var newGroceryItem = GroceryItem(
-                    id: newId.toString(),
-                    name: _nameController.text,
-                    quantity: int.parse(_quantityController.text),
-                    category: categories[selectedCategory]!,
-                  );
-                  ref
-                      .read(groceryItemsProvider.notifier)
-                      .updateGroceryItem(newGroceryItem, ref);
-                  Navigator.of(context).pop();
                 },
                 child: Text("Add Item"),
               ),
