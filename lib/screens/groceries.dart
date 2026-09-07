@@ -28,31 +28,42 @@ class _GroceriesState extends ConsumerState<Groceries> {
         actions: [IconButton(onPressed: _addItem, icon: Icon(Icons.add))],
       ),
 
-      body: ListView.builder(
-        itemCount: groceryItems.length,
-        padding: EdgeInsets.all(16),
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                color: groceryItems[index].category.color,
-              ),
-            ),
+      body: groceryItems.isEmpty
+          ? Center(child: Text("No Items Found. Start by Adding Items."))
+          : ListView.builder(
+              itemCount: groceryItems.length,
+              padding: EdgeInsets.all(16),
+              itemBuilder: (context, index) {
+                return Dismissible(
+                  key: ValueKey(groceryItems[index].id),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    ref
+                        .watch(groceryItemsProvider.notifier)
+                        .deleteGroceryItem(groceryItems[index]);
+                  },
+                  child: ListTile(
+                    leading: Container(
+                      width: 35,
+                      height: 35,
+                      decoration: BoxDecoration(
+                        color: groceryItems[index].category.color,
+                      ),
+                    ),
 
-            title: Text(
-              groceryItems[index].name,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
+                    title: Text(
+                      groceryItems[index].name,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
 
-            trailing: Text(
-              groceryItems[index].quantity.toString(),
-              style: Theme.of(context).textTheme.bodyLarge,
+                    trailing: Text(
+                      groceryItems[index].quantity.toString(),
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }

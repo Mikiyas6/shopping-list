@@ -186,8 +186,8 @@ class _NewItemFormState extends ConsumerState<NewItemForm> {
                 onPressed: () {
                   if (formKey.currentState!.validate()) {
                     formKey.currentState!.save();
-                    final groceries = ref.watch(groceryItemsProvider);
-                    var newId = groceries.length + 1;
+
+                    var newId = DateTime.now().toIso8601String();
                     var newGroceryItem = GroceryItem(
                       id: newId.toString(),
                       name: enteredName,
